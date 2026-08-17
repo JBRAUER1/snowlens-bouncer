@@ -14,8 +14,16 @@ load_dotenv()
 
 # --- CLOUD SECRETS ---
 MASTER_OPENROUTER_KEY = os.getenv("OPENROUTER_API_KEY")
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") # Must use Service Role to bypass RLS
+
+# We are hardcoding the fallback URL right here. 
+# Replace the https link with your actual Supabase URL.
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://your-project.supabase.co")
+
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") 
+
+# Add this print statement so we can spy on Railway's logs
+if not SUPABASE_SERVICE_KEY:
+    print("CRITICAL DIAGNOSTIC: Railway is completely failing to inject the secret variables!")
 
 # Initialize Supabase Client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)

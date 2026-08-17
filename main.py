@@ -28,6 +28,10 @@ if not SUPABASE_SERVICE_KEY:
 # Initialize Supabase Client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
+# TEMPORARY BYPASS FOR SPRINT 3 TESTING
+# Replace this string with the actual UID from Supabase
+TEST_USER_ID = "09183802-6dde-46e2-bae5-c7bbdb871f5a"
+
 app = FastAPI(title="Snow Lens Rosenbridge Proxy")
 
 app.add_middleware(
@@ -49,7 +53,8 @@ MODEL_PRICING = {
 
 def verify_and_deduct_credits(login_key: str, prompt_tokens: int, completion_tokens: int, ai_model: str):
     """Checks user balance, calculates the 66% marked-up cost, and deducts the float."""
-    user_res = supabase.table("users").select("id, compute_balance").eq("login_key", login_key).execute()
+    # BYPASS: Ignore frontend login_key, force lookup by hardcoded TEST_USER_ID
+    user_res = supabase.table("users").select("id, compute_balance").eq("id", TEST_USER_ID).execute()
     if not user_res.data:
         raise HTTPException(status_code=401, detail="Invalid Login Key.")
     
@@ -104,7 +109,8 @@ def extract_valid_json_objects(text: str) -> list:
 
 def call_openrouter(ai_model: str, messages: list, login_key: str, **kwargs):
     """The central routing tunnel. Handles OpenRouter call AND financial math."""
-    user_res = supabase.table("users").select("compute_balance").eq("login_key", login_key).execute()
+    # BYPASS: Ignore frontend login_key, force lookup by hardcoded TEST_USER_ID
+    user_res = supabase.table("users").select("compute_balance").eq("id", TEST_USER_ID).execute()
     if not user_res.data or float(user_res.data[0]['compute_balance']) <= 0:
         raise HTTPException(status_code=402, detail="Insufficient Compute Credits or Invalid Key.")
 

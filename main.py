@@ -163,6 +163,8 @@ def proxy_analyze_style(req: StyleRequest):
             "manifesto": manifesto_raw,
             "compressed_tags": compressed_raw
         }
+    except HTTPException:
+        raise
     except Exception as e:
         return {"error": "Pipeline Failure", "details": str(e)}
 
@@ -179,6 +181,8 @@ def proxy_coach_preflight(req: CoachPreflightRequest):
         res_text = call_openrouter(req.ai_model, messages, req.api_key, response_format={"type": "json_object"})
         context = json.dumps(json.loads(res_text))
         return {"narrative_context": context}
+    except HTTPException:
+        raise
     except:
         return {"narrative_context": "Summary unavailable."}
 
@@ -207,6 +211,8 @@ def proxy_coach_main(req: CoachMainRequest):
                     suggestions = val
                     break
         return {"suggestions": suggestions}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -265,5 +271,7 @@ def proxy_adjudicator(req: AdjudicatorRequest):
             data = extracted[0] if extracted else {"suggested": "", "critique": "Failed to parse adjudicator response."}
             
         return data
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

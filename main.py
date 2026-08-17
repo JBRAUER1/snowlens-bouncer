@@ -214,6 +214,7 @@ def proxy_coach_main(req: CoachMainRequest):
     except HTTPException:
         raise
     except Exception as e:
+        print(f"--- [BOUNCER CRASH REPORT] --- {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ==========================================
@@ -244,7 +245,10 @@ def proxy_run_pass(req: PassRequest):
                     suggestions = val
                     break
         return {"suggestions": suggestions}
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"--- [BOUNCER CRASH REPORT] --- {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ==========================================
@@ -274,4 +278,5 @@ def proxy_adjudicator(req: AdjudicatorRequest):
     except HTTPException:
         raise
     except Exception as e:
+        print(f"--- [BOUNCER CRASH REPORT] --- {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

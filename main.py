@@ -30,7 +30,7 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
 # TEMPORARY BYPASS FOR SPRINT 3 TESTING
 # Replace this string with the actual UID from Supabase
-TEST_USER_ID = "09183802-6dde-46e2-bae5-c7bbdb871f5a"
+TEST_USER_ID = "4a749b85-e158-46dc-bb2f-67ed002e20b8"
 
 app = FastAPI(title="Snow Lens Rosenbridge Proxy")
 
@@ -54,7 +54,7 @@ MODEL_PRICING = {
 def verify_and_deduct_credits(login_key: str, prompt_tokens: int, completion_tokens: int, ai_model: str):
     """Checks user balance, calculates the 66% marked-up cost, and deducts the float."""
     # BYPASS: Ignore frontend login_key, force lookup by hardcoded TEST_USER_ID
-    user_res = supabase.table("users").select("id, compute_balance").eq("id", TEST_USER_ID).execute()
+    user_res = supabase.table("user_wallets").select("user_id, compute_balance").eq("user_id", TEST_USER_ID).execute()
     if not user_res.data:
         raise HTTPException(status_code=401, detail="Invalid Login Key.")
     
@@ -69,10 +69,10 @@ def verify_and_deduct_credits(login_key: str, prompt_tokens: int, completion_tok
     cost_out = (completion_tokens / 1000000) * rates["out"]
     raw_cost_dollars = cost_in + cost_out
 
-    credits_to_deduct = (raw_cost_dollars * 100) * 3.0 
+    credits_to_deduct = raw_cost_dollars * 3.0
 
     new_balance = max(0.0, current_balance - credits_to_deduct)
-    supabase.table("users").update({"compute_balance": new_balance}).eq("id", user['id']).execute()
+    supabase.table("user_wallets").update({"compute_balance": new_balance}).eq("user_id", user['user_id']).execute()
 
 def repair_broken_json(content: str) -> str:
     if not content: return "{}"
@@ -110,7 +110,8 @@ def extract_valid_json_objects(text: str) -> list:
 def call_openrouter(ai_model: str, messages: list, login_key: str, **kwargs):
     """The central routing tunnel. Handles OpenRouter call AND financial math."""
     # BYPASS: Ignore frontend login_key, force lookup by hardcoded TEST_USER_ID
-    user_res = supabase.table("users").select("compute_balance").eq("id", TEST_USER_ID).execute()
+    user_res = supabase.table("user_wallets").select("compute_balance").eq("user_id", TEST_USER_ID).execute()
+    print("--- [DEBUG] SUPABASE RAW RESPONSE ---", user_res.data)
     if not user_res.data or float(user_res.data[0]['compute_balance']) <= 0:
         raise HTTPException(status_code=402, detail="Insufficient Compute Credits or Invalid Key.")
 

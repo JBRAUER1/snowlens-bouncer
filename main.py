@@ -9,6 +9,10 @@ from dotenv import load_dotenv
 # Clean, synced imports
 from models import StyleRequest, CoachPreflightRequest, CoachMainRequest, PassRequest, AdjudicatorRequest
 from prompts import get_agent1_prompts, get_agent2_prompts, get_adjudicator_prompts
+from pydantic import BaseModel
+
+class AuthRequest(BaseModel):
+    api_key: str
 
 load_dotenv()
 
@@ -216,6 +220,33 @@ def proxy_coach_main(req: CoachMainRequest):
         raise
     except Exception as e:
         print(f"--- [BOUNCER CRASH REPORT] --- {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==========================================
+# AUTHENTICATION: LOGIN GATEKEEPER
+# ==========================================
+@app.post("/api/v1/auth/verify")
+def verify_login(req: AuthRequest):
+    try:
+        # Check Supabase to see if the user's UUID exists in the wallets table
+        response = supabase.table('user_wallets').select('compute_balance').eq('user_id', req.api_key).execute()
+        
+        if not response.data or len(response.data) == 0:
+            raise HTTPException(status_code=401, detail="Invalid Login Key.")
+            
+        # The key is valid! Grab the balance.
+        user_data = response.data[0]
+        current_balance = float(user_data.get('compute_balance', 0.0))
+        
+        return {
+            "status": "success",
+            "message": "Authentication successful",
+            "balance": current_balance
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"--- [AUTH CRASH REPORT] --- {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # ==========================================

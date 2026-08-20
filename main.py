@@ -10,9 +10,12 @@ from dotenv import load_dotenv
 from models import StyleRequest, CoachPreflightRequest, CoachMainRequest, PassRequest, AdjudicatorRequest
 from prompts import get_agent1_prompts, get_agent2_prompts, get_adjudicator_prompts
 from pydantic import BaseModel
+from typing import Optional
 
 class AuthRequest(BaseModel):
-    api_key: str
+    api_key: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
 
 load_dotenv()
 
@@ -228,20 +231,45 @@ def proxy_coach_main(req: CoachMainRequest):
 @app.post("/api/v1/auth/verify")
 def verify_login(req: AuthRequest):
     try:
-        # Check Supabase to see if the user's UUID exists in the wallets table
-        response = supabase.table('user_wallets').select('compute_balance').eq('user_id', req.api_key).execute()
+        user_id = None
+        
+        # BRANCH 1: Manual Login (Email and Password provided)
+        if req.email and req.password:
+            try:
+                # Ask Supabase Auth to securely verify the credentials
+                auth_response = supabase.auth.sign_in_with_password({
+                    "email": req.email,
+                    "password": req.password
+                })
+                # Success! Extract the true UUID
+                user_id = auth_response.user.id
+            except Exception as e:
+                # Supabase throws an exception if the password/email is wrong
+                raise HTTPException(status_code=401, detail="Invalid Email or Password.")
+                
+        # BRANCH 2: Background Sync (Using the local saved UUID)
+        elif req.api_key:
+            user_id = req.api_key
+            
+        else:
+            raise HTTPException(status_code=400, detail="Missing credentials.")
+
+        # Now that we have the verified user_id, check their wallet
+        response = supabase.table('user_wallets').select('compute_balance').eq('user_id', user_id).execute()
         
         if not response.data or len(response.data) == 0:
-            raise HTTPException(status_code=401, detail="Invalid Login Key.")
+            raise HTTPException(status_code=401, detail="Wallet not found for this account.")
             
-        # The key is valid! Grab the balance.
+        # Grab the balance
         user_data = response.data[0]
         current_balance = float(user_data.get('compute_balance', 0.0))
         
+        # Return the balance AND the UUID so the desktop app can save it
         return {
             "status": "success",
             "message": "Authentication successful",
-            "balance": current_balance
+            "balance": current_balance,
+            "api_key": user_id 
         }
     except HTTPException:
         raise

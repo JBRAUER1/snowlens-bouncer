@@ -35,10 +35,6 @@ if not SUPABASE_SERVICE_KEY:
 # Initialize Supabase Client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 
-# TEMPORARY BYPASS FOR SPRINT 3 TESTING
-# Replace this string with the actual UID from Supabase
-TEST_USER_ID = "4a749b85-e158-46dc-bb2f-67ed002e20b8"
-
 app = FastAPI(title="Snow Lens Rosenbridge Proxy")
 
 app.add_middleware(
@@ -59,11 +55,10 @@ MODEL_PRICING = {
 }
 
 def verify_and_deduct_credits(login_key: str, prompt_tokens: int, completion_tokens: int, ai_model: str):
-    """Checks user balance, calculates the 66% marked-up cost, and deducts the float."""
-    # BYPASS: Ignore frontend login_key, force lookup by hardcoded TEST_USER_ID
-    user_res = supabase.table("user_wallets").select("user_id, compute_balance").eq("user_id", TEST_USER_ID).execute()
+    """Checks user balance, calculates the marked-up cost, and deducts the float from the active user."""
+    user_res = supabase.table("user_wallets").select("user_id, compute_balance").eq("user_id", login_key).execute()
     if not user_res.data:
-        raise HTTPException(status_code=401, detail="Invalid Login Key.")
+        raise HTTPException(status_code=401, detail="Invalid Login Key or User Not Found.")
     
     user = user_res.data[0]
     current_balance = float(user['compute_balance'])
@@ -115,10 +110,8 @@ def extract_valid_json_objects(text: str) -> list:
     return results
 
 def call_openrouter(ai_model: str, messages: list, login_key: str, **kwargs):
-    """The central routing tunnel. Handles OpenRouter call AND financial math."""
-    # BYPASS: Ignore frontend login_key, force lookup by hardcoded TEST_USER_ID
-    user_res = supabase.table("user_wallets").select("compute_balance").eq("user_id", TEST_USER_ID).execute()
-    print("--- [DEBUG] SUPABASE RAW RESPONSE ---", user_res.data)
+    """The central routing tunnel. Handles OpenRouter call AND financial math for the active user."""
+    user_res = supabase.table("user_wallets").select("compute_balance").eq("user_id", login_key).execute()
     if not user_res.data or float(user_res.data[0]['compute_balance']) <= 0:
         raise HTTPException(status_code=402, detail="Insufficient Compute Credits or Invalid Key.")
 

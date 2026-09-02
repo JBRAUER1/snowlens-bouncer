@@ -88,6 +88,8 @@ def get_agent2_prompts(
     Returns sys_prompt, task_discovery, and optional idx_task for Agent 2.
     Fully covers GPT, Claude, Gemini, Llama, and Mistral variants.
     """
+    idx_task = ""
+    
     # Set a strict mechanical vs creative persona
     if active_tool in ["grammar", "punctuation"]:
         base_persona = "You are a strict, robotic, literal-minded Mechanical Copy Editor. You have ZERO creative input. You do not care about flow, tone, or style."

@@ -88,16 +88,18 @@ def get_agent2_prompts(
     Returns sys_prompt, task_discovery, and optional idx_task for Agent 2.
     Fully covers GPT, Claude, Gemini, Llama, and Mistral variants.
     """
-    sys_prompt = ""
-    task_discovery = ""
-    idx_task = ""
+    # Set a strict mechanical vs creative persona
+    if active_tool in ["grammar", "punctuation"]:
+        base_persona = "You are a strict, robotic, literal-minded Mechanical Copy Editor. You have ZERO creative input. You do not care about flow, tone, or style."
+    else:
+        base_persona = "You are a professional Stylistic Architect."
 
     # --------------------------------------------------------------------------
     # VARIANT 1: GPT-4o
     # --------------------------------------------------------------------------
     if "gpt" in ai_model.lower():
         sys_prompt = f"""
-        You are a professional Stylistic Architect. 
+        {base_persona}
         [CRITICAL CONSTRAINTS - THE HIGHEST LAW]:
         {constraints}
         
@@ -110,6 +112,7 @@ def get_agent2_prompts(
             task_discovery = f"""Focus on OBJECTIVE Mechanics and Syntax.
             TARGETS: Spelling, Homophones, Subject-Verb Agreement, Tense Consistency, Run-on Sentences, and Capitalization.
             STRICT EXCLUSIONS: Do NOT flag stylistic punctuation (commas, colons, semi-colons), deliberate dialogue fragments, or sensory word choice.
+            CRITICAL VETO: DO NOT rewrite sentences to sound "better" or improve the flow. If the grammar is technically legal, you MUST leave it alone, even if it sounds clunky.
             RULES:
             1. If two independent clauses are mashed together (run-on), suggest a split or conjunction.
             2. Do NOT suggest adding a period if one already exists at the end of the sentence.
@@ -200,7 +203,7 @@ def get_agent2_prompts(
     # --------------------------------------------------------------------------
     elif "claude" in ai_model.lower():
         sys_prompt = f"""
-        You are a professional Stylistic Architect. 
+        {base_persona}
         [CRITICAL CONSTRAINTS - THE HIGHEST LAW]:
         {constraints}
         
@@ -213,6 +216,7 @@ def get_agent2_prompts(
             task_discovery = f"""Focus on OBJECTIVE Mechanics and Syntax.
             TARGETS: Spelling, Homophones, Subject-Verb Agreement, Tense Consistency, Run-on Sentences, and Capitalization.
             STRICT EXCLUSIONS: Do NOT flag stylistic punctuation (commas, colons, semi-colons), deliberate dialogue fragments, or sensory word choice.
+            CRITICAL VETO: DO NOT rewrite sentences to sound "better" or improve the flow. If the grammar is technically legal, you MUST leave it alone, even if it sounds clunky.
             RULES:
             1. If two independent clauses are mashed together (run-on), suggest a split or conjunction.
             2. Do NOT suggest adding a period if one already exists at the end of the sentence.
@@ -302,7 +306,7 @@ def get_agent2_prompts(
     # --------------------------------------------------------------------------
     elif "gemini" in ai_model.lower():
         sys_prompt = f"""
-        You are a professional Stylistic Architect. 
+        {base_persona}
         [CRITICAL CONSTRAINTS - THE HIGHEST LAW]:
         {constraints}
         
@@ -315,6 +319,7 @@ def get_agent2_prompts(
             task_discovery = f"""Focus on OBJECTIVE Mechanics and Syntax.
             TARGETS: Spelling, Homophones, Subject-Verb Agreement, Tense Consistency, Run-on Sentences, and Capitalization.
             STRICT EXCLUSIONS: Do NOT flag stylistic punctuation (commas, colons, semi-colons), deliberate dialogue fragments, or sensory word choice.
+            CRITICAL VETO: DO NOT rewrite sentences to sound "better" or improve the flow. If the grammar is technically legal, you MUST leave it alone, even if it sounds clunky.
             RULES:
             1. If two independent clauses are mashed together (run-on), suggest a split or conjunction.
             2. Do NOT suggest adding a period if one already exists at the end of the sentence.
@@ -402,7 +407,7 @@ def get_agent2_prompts(
     # --------------------------------------------------------------------------
     elif "llama" in ai_model.lower():
         sys_prompt = f"""
-        You are a professional Stylistic Architect. 
+        {base_persona}
         [CRITICAL CONSTRAINTS - THE HIGHEST LAW]:
         {constraints}
         
@@ -415,6 +420,7 @@ def get_agent2_prompts(
             task_discovery = f"""Focus on OBJECTIVE Mechanics and Syntax.
             TARGETS: Spelling, Homophones, Subject-Verb Agreement, Tense Consistency, Run-on Sentences, and Capitalization.
             STRICT EXCLUSIONS: Do NOT flag stylistic punctuation (commas, colons, semi-colons), deliberate dialogue fragments, or sensory word choice.
+            CRITICAL VETO: DO NOT rewrite sentences to sound "better" or improve the flow. If the grammar is technically legal, you MUST leave it alone, even if it sounds clunky.
             RULES:
             1. If two independent clauses are mashed together (run-on), suggest a split or conjunction.
             2. Do NOT suggest adding a period if one already exists at the end of the sentence.
@@ -500,7 +506,7 @@ def get_agent2_prompts(
     # --------------------------------------------------------------------------
     else:
         sys_prompt = f"""
-        You are a professional Stylistic Architect. 
+        {base_persona}
         [CRITICAL CONSTRAINTS - THE HIGHEST LAW]:
         {constraints}
         
@@ -513,6 +519,7 @@ def get_agent2_prompts(
             task_discovery = f"""Focus on OBJECTIVE Mechanics and Syntax.
             TARGETS: Spelling, Homophones, Subject-Verb Agreement, Tense Consistency, Run-on Sentences, and Capitalization.
             STRICT EXCLUSIONS: Do NOT flag stylistic punctuation (commas, colons, semi-colons), deliberate dialogue fragments, or sensory word choice.
+            CRITICAL VETO: DO NOT rewrite sentences to sound "better" or improve the flow. If the grammar is technically legal, you MUST leave it alone, even if it sounds clunky.
             RULES:
             1. If two independent clauses are mashed together (run-on), suggest a split or conjunction.
             2. Do NOT suggest adding a period if one already exists at the end of the sentence.

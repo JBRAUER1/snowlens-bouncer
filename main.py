@@ -73,8 +73,15 @@ def verify_and_deduct_credits(login_key: str, prompt_tokens: int, completion_tok
 
     credits_to_deduct = raw_cost_dollars * 3.0
 
+    # --- THE DIAGNOSTIC INTERROGATOR ---
+    print(f"--- [BILLING] Model: {ai_model} | Tokens: {prompt_tokens} in, {completion_tokens} out | Deducting: ${credits_to_deduct:.5f} ---")
+
     new_balance = max(0.0, current_balance - credits_to_deduct)
-    supabase.table("user_wallets").update({"compute_balance": new_balance}).eq("user_id", user['user_id']).execute()
+    update_res = supabase.table("user_wallets").update({"compute_balance": new_balance}).eq("user_id", user['user_id']).execute()
+    
+    # --- CATCH THE SILENT FAILURE ---
+    if not update_res.data:
+        print("--- [CRITICAL BILLING FAILURE] Supabase update returned empty! RLS blocked the update or key is invalid! ---")
 
 def repair_broken_json(content: str) -> str:
     if not content: return "{}"
